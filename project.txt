@@ -1,0 +1,2302 @@
+
+File name:
+maven-wrapper.properties
+File path:
+./.mvn/wrapper/maven-wrapper.properties
+
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+wrapperVersion=3.3.2
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.zip
+
+
+File name:
+EcommerceAppApplicationTests.java
+File path:
+./src/test/java/com/yourapp/ecommerce/EcommerceAppApplicationTests.java
+
+package com.yourapp.ecommerce;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class EcommerceAppApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
+
+
+File name:
+application.properties
+File path:
+./src/main/resources/application.properties
+
+spring.application.name=ecommerceApp
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/ecommerce_db
+spring.datasource.username=admin
+spring.datasource.password=admin
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+jwt.secret=your_jwt_secret_key
+jwt.expiration=3600000
+stripe.secret.key=your_stripe_secret_key
+stripe.public.key=your_stripe_public_key
+
+
+File name:
+User.java
+File path:
+./src/main/java/com/yourapp/ecommerce/entity/User.java
+
+package com.yourapp.ecommerce.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "users")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String username;
+
+    @Column(unique = true, nullable = false)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+    private String roles; // comma-separated roles or can be replaced with Role entity later
+}
+
+File name:
+CartItem.java
+File path:
+./src/main/java/com/yourapp/ecommerce/entity/CartItem.java
+
+package com.yourapp.ecommerce.entity;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "cart_items")
+public class CartItem {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cart_id", nullable = false)
+    private Cart cart;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
+    private int quantity;
+
+    // Getters and setters
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Cart getCart() {
+        return cart;
+    }
+
+    public void setCart(Cart cart) {
+        this.cart = cart;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+}
+
+File name:
+Order.java
+File path:
+./src/main/java/com/yourapp/ecommerce/entity/Order.java
+
+package com.yourapp.ecommerce.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Table(name = "orders")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Order {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    private LocalDateTime orderDate;
+
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
+
+    private BigDecimal totalAmount;
+
+    private String shippingAddress;
+
+    private String paymentIntentId;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    private List<OrderItem> orderItems;
+}
+
+
+File name:
+OrderItem.java
+File path:
+./src/main/java/com/yourapp/ecommerce/entity/OrderItem.java
+
+package com.yourapp.ecommerce.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+
+@Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderItem {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    private Order order;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private Product product;
+
+    private int quantity;
+
+    private BigDecimal priceAtPurchase;
+}
+
+File name:
+Cart.java
+File path:
+./src/main/java/com/yourapp/ecommerce/entity/Cart.java
+
+package com.yourapp.ecommerce.entity;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "carts")
+public class Cart {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
+    private User user;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = createdAt;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // Getters and setters
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<CartItem> items;
+
+    public java.util.List<CartItem> getItems() {
+        return items;
+    }
+
+    public void setItems(java.util.List<CartItem> items) {
+        this.items = items;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+}
+
+File name:
+Category.java
+File path:
+./src/main/java/com/yourapp/ecommerce/entity/Category.java
+
+package com.yourapp.ecommerce.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "categories", uniqueConstraints = @UniqueConstraint(columnNames = "name"))
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Category {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String name;
+}
+
+File name:
+Product.java
+File path:
+./src/main/java/com/yourapp/ecommerce/entity/Product.java
+
+package com.yourapp.ecommerce.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "products")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Product {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    private String description;
+
+    @Column(nullable = false)
+    private BigDecimal price;
+
+    @Column(nullable = false)
+    private int stockQuantity;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+    public int getStock() {
+        return this.stockQuantity;
+    }
+
+    public void setStock(int stock) {
+        this.stockQuantity = stock;
+    }
+}
+
+File name:
+OrderStatus.java
+File path:
+./src/main/java/com/yourapp/ecommerce/entity/OrderStatus.java
+
+package com.yourapp.ecommerce.entity;
+
+public enum OrderStatus {
+    PENDING,
+    PAID,
+    SHIPPED,
+    FAILED
+}
+
+File name:
+PaymentService.java
+File path:
+./src/main/java/com/yourapp/ecommerce/service/PaymentService.java
+
+package com.yourapp.ecommerce.service;
+
+import com.stripe.Stripe;
+import com.stripe.model.PaymentIntent;
+import com.stripe.param.PaymentIntentCreateParams;
+import com.yourapp.ecommerce.entity.Order;
+import com.yourapp.ecommerce.repository.OrderRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Service
+@Slf4j
+public class PaymentService {
+
+    @Value("${stripe.secret.key}")
+    private String stripeSecretKey;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    public String createPaymentIntent(Order order) {
+        log.info("Creating payment intent for order ID: {}", order.getId());
+        Stripe.apiKey = stripeSecretKey;
+
+        try {
+            PaymentIntentCreateParams params =
+                    PaymentIntentCreateParams.builder()
+                            .setAmount(order.getTotalAmount().multiply(java.math.BigDecimal.valueOf(100)).longValue()) // amount in cents
+                            .setCurrency("usd")
+                            .putMetadata("order_id", order.getId().toString())
+                            .build();
+
+            PaymentIntent intent = PaymentIntent.create(params);
+
+            order.setPaymentIntentId(intent.getId());
+            orderRepository.save(order);
+
+            log.info("Payment intent created with ID: {} for order ID: {}", intent.getId(), order.getId());
+            return intent.getClientSecret();
+        } catch (Exception e) {
+            log.error("Stripe payment intent creation failed for order ID: {}", order.getId(), e);
+            throw new RuntimeException("Stripe payment intent creation failed", e);
+        }
+    }
+}
+
+File name:
+ProductService.java
+File path:
+./src/main/java/com/yourapp/ecommerce/service/ProductService.java
+
+package com.yourapp.ecommerce.service;
+
+import com.yourapp.ecommerce.dto.CreateProductRequest;
+import com.yourapp.ecommerce.dto.ProductDto;
+import com.yourapp.ecommerce.dto.UpdateProductRequest;
+import com.yourapp.ecommerce.entity.Category;
+import com.yourapp.ecommerce.entity.Product;
+import com.yourapp.ecommerce.repository.CategoryRepository;
+import com.yourapp.ecommerce.repository.ProductRepository;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+@Slf4j
+public class ProductService {
+
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+
+    public ProductDto createProduct(CreateProductRequest request) {
+        log.info("Creating product with name: {}", request.getName());
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+
+        Product product = new Product();
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setStockQuantity(request.getStockQuantity());
+        product.setCategory(category);
+
+        Product saved = productRepository.save(product);
+        log.info("Product created with ID: {}", saved.getId());
+        return toDto(saved);
+    }
+
+    public ProductDto getProductById(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+        return toDto(product);
+    }
+
+    public ProductDto updateProduct(Long id, UpdateProductRequest request) {
+        log.info("Updating product with ID: {}", id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setStockQuantity(request.getStockQuantity());
+        product.setCategory(category);
+
+        Product updated = productRepository.save(product);
+        log.info("Product updated with ID: {}", updated.getId());
+        return toDto(updated);
+    }
+
+    public void deleteProduct(Long id) {
+        log.info("Deleting product with ID: {}", id);
+        if (!productRepository.existsById(id)) {
+            log.warn("Attempted to delete non-existent product with ID: {}", id);
+            throw new EntityNotFoundException("Product not found");
+        }
+        productRepository.deleteById(id);
+        log.info("Product deleted with ID: {}", id);
+    }
+
+    public Page<ProductDto> getAllProducts(Pageable pageable, Optional<String> categoryName, Optional<String> search) {
+        Specification<Product> spec = Specification.where(null);
+
+        if (categoryName.isPresent()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.join("category").get("name"), categoryName.get()));
+        }
+
+        if (search.isPresent()) {
+            String pattern = "%" + search.get().toLowerCase() + "%";
+            spec = spec.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("name")), pattern));
+        }
+
+        return productRepository.findAll(spec, pageable).map(this::toDto);
+    }
+
+    private ProductDto toDto(Product product) {
+        ProductDto dto = new ProductDto();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setDescription(product.getDescription());
+        dto.setPrice(product.getPrice());
+        dto.setStockQuantity(product.getStockQuantity());
+        dto.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : null);
+        dto.setCategoryName(product.getCategory() != null ? product.getCategory().getName() : null);
+        dto.setCreatedAt(product.getCreatedAt());
+        dto.setUpdatedAt(product.getUpdatedAt());
+        return dto;
+    }
+}
+
+File name:
+OrderService.java
+File path:
+./src/main/java/com/yourapp/ecommerce/service/OrderService.java
+
+package com.yourapp.ecommerce.service;
+
+import com.yourapp.ecommerce.dto.ShippingDetailsDto;
+import com.yourapp.ecommerce.entity.*;
+import com.yourapp.ecommerce.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+@Slf4j
+public class OrderService {
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+
+    @Autowired
+    private CartRepository cartRepository;
+
+    @Autowired
+    private CartItemRepository cartItemRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Transactional
+    public Order createOrderFromCart(User user, ShippingDetailsDto shippingDetails) {
+        log.info("Creating order for user: {}", user.getUsername());
+        Cart cart = cartRepository.findByUser(user).orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        if (cart.getItems().isEmpty()) {
+            log.warn("Attempted to create order with empty cart for user: {}", user.getUsername());
+            throw new RuntimeException("Cart is empty");
+        }
+
+        for (CartItem cartItem : cart.getItems()) {
+            if (cartItem.getProduct().getStock() < cartItem.getQuantity()) {
+                log.warn("Insufficient stock for product {} requested by user {}", cartItem.getProduct().getName(), user.getUsername());
+                throw new RuntimeException("Insufficient stock for product: " + cartItem.getProduct().getName());
+            }
+        }
+
+        Order order = new Order();
+        order.setUser(user);
+        order.setOrderDate(LocalDateTime.now());
+        order.setStatus(OrderStatus.PENDING);
+        order.setShippingAddress(shippingDetails.getAddress());
+
+        List<OrderItem> orderItems = new ArrayList<>();
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (CartItem cartItem : cart.getItems()) {
+            Product product = cartItem.getProduct();
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setProduct(product);
+            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setPriceAtPurchase(product.getPrice());
+
+            orderItems.add(orderItem);
+
+            total = total.add(product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+
+            product.setStock(product.getStock() - cartItem.getQuantity());
+            productRepository.save(product);
+        }
+
+        order.setTotalAmount(total);
+        order.setOrderItems(orderItems);
+
+        Order savedOrder = orderRepository.save(order);
+        orderItemRepository.saveAll(orderItems);
+
+        cartItemRepository.deleteAll(cart.getItems());
+
+        log.info("Order created with ID: {} for user: {}", savedOrder.getId(), user.getUsername());
+        return savedOrder;
+    }
+
+    public Order getOrderById(Long orderId, User user) {
+        return orderRepository.findById(orderId)
+                .filter(order -> order.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+    }
+
+    public void updateOrderStatus(Long orderId, OrderStatus status) {
+        log.info("Updating order ID {} to status {}", orderId, status);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        order.setStatus(status);
+        orderRepository.save(order);
+        log.info("Order ID {} updated to status {}", orderId, status);
+    }
+
+    public Order findOrderByPaymentIntentId(String paymentIntentId) {
+        return orderRepository.findByPaymentIntentId(paymentIntentId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+    }
+
+    public java.util.List<Order> getOrdersByUser(User user) {
+        return orderRepository.findAll().stream()
+                .filter(order -> order.getUser().getId().equals(user.getId()))
+                .toList();
+    }
+
+    // Admin: get all orders
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
+    }
+
+    // Admin: get orders filtered by status
+    public List<Order> getOrdersByStatus(OrderStatus status) {
+        return orderRepository.findByStatus(status);
+    }
+
+    // Admin: get order by ID without user restriction
+    public Order getOrderById(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+    }
+}
+
+File name:
+CartService.java
+File path:
+./src/main/java/com/yourapp/ecommerce/service/CartService.java
+
+package com.yourapp.ecommerce.service;
+
+import com.yourapp.ecommerce.dto.CartDto;
+import com.yourapp.ecommerce.dto.CartItemDto;
+import com.yourapp.ecommerce.entity.*;
+import com.yourapp.ecommerce.repository.CartItemRepository;
+import com.yourapp.ecommerce.repository.CartRepository;
+import com.yourapp.ecommerce.repository.ProductRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@Transactional
+@Slf4j
+public class CartService {
+
+    @Autowired
+    private CartRepository cartRepository;
+
+    @Autowired
+    private CartItemRepository cartItemRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    public CartDto getCart(User user) {
+        Cart cart = getOrCreateCart(user);
+        List<CartItem> cartItems = cartItemRepository.findAll().stream()
+                .filter(item -> item.getCart().getId().equals(cart.getId()))
+                .toList();
+
+        List<CartItemDto> itemDtos = new ArrayList<>();
+        double total = 0.0;
+
+        for (CartItem item : cartItems) {
+            Product product = item.getProduct();
+            double price = product.getPrice().doubleValue();
+            int quantity = item.getQuantity();
+            total += price * quantity;
+
+            itemDtos.add(new CartItemDto(
+                    product.getId(),
+                    product.getName(),
+                    price,
+                    quantity
+            ));
+        }
+
+        return new CartDto(itemDtos, total);
+    }
+
+    public void addProductToCart(User user, Long productId, int quantity) {
+        log.info("Adding product {} (qty {}) to cart for user {}", productId, quantity, user.getUsername());
+        Cart cart = getOrCreateCart(user);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        Optional<CartItem> existingItemOpt = cartItemRepository.findByCartAndProduct(cart, product);
+        if (existingItemOpt.isPresent()) {
+            CartItem existingItem = existingItemOpt.get();
+            existingItem.setQuantity(existingItem.getQuantity() + quantity);
+            cartItemRepository.save(existingItem);
+            log.info("Updated quantity of product {} in cart for user {}", productId, user.getUsername());
+        } else {
+            CartItem newItem = new CartItem();
+            newItem.setCart(cart);
+            newItem.setProduct(product);
+            newItem.setQuantity(quantity);
+            cartItemRepository.save(newItem);
+            log.info("Added new product {} to cart for user {}", productId, user.getUsername());
+        }
+    }
+
+    public void updateCartItemQuantity(User user, Long productId, int quantity) {
+        log.info("Updating quantity of product {} to {} in cart for user {}", productId, quantity, user.getUsername());
+        Cart cart = getOrCreateCart(user);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        CartItem item = cartItemRepository.findByCartAndProduct(cart, product)
+                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+
+        item.setQuantity(quantity);
+        cartItemRepository.save(item);
+        log.info("Updated quantity of product {} to {} in cart for user {}", productId, quantity, user.getUsername());
+    }
+
+    public void removeProductFromCart(User user, Long productId) {
+        log.info("Removing product {} from cart for user {}", productId, user.getUsername());
+        Cart cart = getOrCreateCart(user);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        CartItem item = cartItemRepository.findByCartAndProduct(cart, product)
+                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+
+        cartItemRepository.delete(item);
+        log.info("Removed product {} from cart for user {}", productId, user.getUsername());
+    }
+
+    public void clearCart(User user) {
+        log.info("Clearing cart for user {}", user.getUsername());
+        Cart cart = getOrCreateCart(user);
+        List<CartItem> cartItems = cartItemRepository.findAll().stream()
+                .filter(item -> item.getCart().getId().equals(cart.getId()))
+                .toList();
+
+        cartItemRepository.deleteAll(cartItems);
+        log.info("Cleared cart for user {}", user.getUsername());
+    }
+
+    private Cart getOrCreateCart(User user) {
+        return cartRepository.findByUserId(user.getId())
+                .orElseGet(() -> {
+                    Cart newCart = new Cart();
+                    newCart.setUser(user);
+                    return cartRepository.save(newCart);
+                });
+    }
+}
+
+File name:
+InsufficientStockException.java
+File path:
+./src/main/java/com/yourapp/ecommerce/exception/InsufficientStockException.java
+
+package com.yourapp.ecommerce.exception;
+
+public class InsufficientStockException extends RuntimeException {
+    public InsufficientStockException(String message) {
+        super(message);
+    }
+}
+
+File name:
+ValidationException.java
+File path:
+./src/main/java/com/yourapp/ecommerce/exception/ValidationException.java
+
+package com.yourapp.ecommerce.exception;
+
+public class ValidationException extends RuntimeException {
+    public ValidationException(String message) {
+        super(message);
+    }
+}
+
+File name:
+ResourceNotFoundException.java
+File path:
+./src/main/java/com/yourapp/ecommerce/exception/ResourceNotFoundException.java
+
+package com.yourapp.ecommerce.exception;
+
+public class ResourceNotFoundException extends RuntimeException {
+    public ResourceNotFoundException(String message) {
+        super(message);
+    }
+}
+
+File name:
+GlobalExceptionHandler.java
+File path:
+./src/main/java/com/yourapp/ecommerce/exception/GlobalExceptionHandler.java
+
+package com.yourapp.ecommerce.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+import com.yourapp.ecommerce.exception.ValidationException;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleResourceNotFound(ResourceNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationException(ValidationException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<Map<String, Object>> handleInsufficientStock(InsufficientStockException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error -> 
+            errors.put(error.getField(), error.getDefaultMessage())
+        );
+        body.put("errors", errors);
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
+    }
+
+    private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", status.value());
+        body.put("error", status.getReasonPhrase());
+        body.put("message", message);
+        return new ResponseEntity<>(body, status);
+    }
+}
+
+File name:
+SecurityConfig.java
+File path:
+./src/main/java/com/yourapp/ecommerce/config/SecurityConfig.java
+
+package com.yourapp.ecommerce.config;
+
+import com.yourapp.ecommerce.security.JwtRequestFilter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+public class SecurityConfig {
+
+    @Autowired
+    private JwtRequestFilter jwtRequestFilter;
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/products/**").permitAll()
+                .anyRequest().authenticated()
+            );
+        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+}
+
+File name:
+WebhookController.java
+File path:
+./src/main/java/com/yourapp/ecommerce/controller/WebhookController.java
+
+package com.yourapp.ecommerce.controller;
+
+import com.stripe.exception.SignatureVerificationException;
+import com.stripe.model.Event;
+import com.stripe.model.PaymentIntent;
+import com.stripe.net.Webhook;
+import com.yourapp.ecommerce.entity.Order;
+import com.yourapp.ecommerce.entity.OrderStatus;
+import com.yourapp.ecommerce.service.OrderService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/webhooks/stripe")
+public class WebhookController {
+
+    @Value("${stripe.webhook.secret:whsec_test_secret}")
+    private String endpointSecret;
+
+    @Autowired
+    private OrderService orderService;
+
+    @PostMapping
+    public ResponseEntity<String> handleStripeEvent(@RequestBody String payload,
+                                                    @RequestHeader("Stripe-Signature") String sigHeader) {
+        Event event;
+
+        try {
+            event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
+        } catch (SignatureVerificationException e) {
+            return ResponseEntity.badRequest().body("Invalid signature");
+        }
+
+        if ("payment_intent.succeeded".equals(event.getType())) {
+            PaymentIntent paymentIntent = (PaymentIntent) event.getDataObjectDeserializer().getObject().orElse(null);
+            if (paymentIntent != null) {
+                Order order = orderService.findOrderByPaymentIntentId(paymentIntent.getId());
+                orderService.updateOrderStatus(order.getId(), OrderStatus.PAID);
+            }
+        } else if ("payment_intent.payment_failed".equals(event.getType())) {
+            PaymentIntent paymentIntent = (PaymentIntent) event.getDataObjectDeserializer().getObject().orElse(null);
+            if (paymentIntent != null) {
+                Order order = orderService.findOrderByPaymentIntentId(paymentIntent.getId());
+                orderService.updateOrderStatus(order.getId(), OrderStatus.FAILED);
+            }
+        }
+
+        return ResponseEntity.ok("Received");
+    }
+}
+
+File name:
+CartController.java
+File path:
+./src/main/java/com/yourapp/ecommerce/controller/CartController.java
+
+package com.yourapp.ecommerce.controller;
+
+import com.yourapp.ecommerce.dto.AddItemRequest;
+import com.yourapp.ecommerce.dto.CartDto;
+import com.yourapp.ecommerce.dto.UpdateItemRequest;
+import com.yourapp.ecommerce.entity.User;
+import com.yourapp.ecommerce.repository.UserRepository;
+import com.yourapp.ecommerce.service.CartService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/api/cart")
+@Validated
+public class CartController {
+
+    @Autowired
+    private CartService cartService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    private User getCurrentUser(Authentication authentication) {
+        String username = authentication.getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @GetMapping
+    public ResponseEntity<CartDto> getCart(Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        CartDto cartDto = cartService.getCart(user);
+        return ResponseEntity.ok(cartDto);
+    }
+
+    @PostMapping("/items")
+    public ResponseEntity<Void> addItem(
+            Authentication authentication,
+            @Valid @RequestBody AddItemRequest request) {
+        User user = getCurrentUser(authentication);
+        cartService.addProductToCart(user, request.getProductId(), request.getQuantity());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/items/{productId}")
+    public ResponseEntity<Void> updateItem(
+            Authentication authentication,
+            @PathVariable Long productId,
+            @Valid @RequestBody UpdateItemRequest request) {
+        User user = getCurrentUser(authentication);
+        cartService.updateCartItemQuantity(user, productId, request.getQuantity());
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/items/{productId}")
+    public ResponseEntity<Void> removeItem(
+            Authentication authentication,
+            @PathVariable Long productId) {
+        User user = getCurrentUser(authentication);
+        cartService.removeProductFromCart(user, productId);
+        return ResponseEntity.ok().build();
+    }
+}
+
+File name:
+ProductController.java
+File path:
+./src/main/java/com/yourapp/ecommerce/controller/ProductController.java
+
+package com.yourapp.ecommerce.controller;
+
+import com.yourapp.ecommerce.dto.ProductDto;
+import com.yourapp.ecommerce.service.ProductService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/products")
+@RequiredArgsConstructor
+public class ProductController {
+
+    private final ProductService productService;
+
+    @GetMapping
+    public ResponseEntity<Page<ProductDto>> getAllProducts(
+            Pageable pageable,
+            @RequestParam Optional<String> category,
+            @RequestParam Optional<String> search) {
+        return ResponseEntity.ok(productService.getAllProducts(pageable, category, search));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDto> getProductById(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.getProductById(id));
+    }
+}
+
+File name:
+AdminOrderController.java
+File path:
+./src/main/java/com/yourapp/ecommerce/controller/AdminOrderController.java
+
+package com.yourapp.ecommerce.controller;
+
+import com.yourapp.ecommerce.dto.OrderDto;
+import com.yourapp.ecommerce.dto.UpdateOrderStatusRequest;
+import com.yourapp.ecommerce.entity.Order;
+import com.yourapp.ecommerce.entity.OrderStatus;
+import com.yourapp.ecommerce.service.OrderService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/admin/orders")
+@Validated
+@PreAuthorize("hasRole('ADMIN')")
+public class AdminOrderController {
+
+    @Autowired
+    private OrderService orderService;
+
+    @GetMapping
+    public List<OrderDto> getAllOrders(@RequestParam(value = "status", required = false) OrderStatus status) {
+        List<Order> orders;
+        if (status != null) {
+            orders = orderService.getOrdersByStatus(status);
+        } else {
+            orders = orderService.getAllOrders();
+        }
+        return orders.stream().map(this::convertToDto).collect(Collectors.toList());
+    }
+
+    @GetMapping("/{orderId}")
+    public OrderDto getOrderById(@PathVariable Long orderId) {
+        Order order = orderService.getOrderById(orderId);
+        return convertToDto(order);
+    }
+
+    @PutMapping("/{orderId}/status")
+    public void updateOrderStatus(@PathVariable Long orderId,
+                                  @Valid @RequestBody UpdateOrderStatusRequest request) {
+        orderService.updateOrderStatus(orderId, request.getStatus());
+    }
+
+    private OrderDto convertToDto(Order order) {
+        OrderDto dto = new OrderDto();
+        dto.setId(order.getId());
+        dto.setOrderDate(order.getOrderDate());
+        dto.setStatus(order.getStatus());
+        dto.setTotalAmount(order.getTotalAmount());
+        dto.setShippingAddress(order.getShippingAddress());
+        dto.setPaymentIntentId(order.getPaymentIntentId());
+        dto.setItems(
+                order.getOrderItems().stream().map(orderItem -> {
+                    com.yourapp.ecommerce.dto.OrderItemDto itemDto = new com.yourapp.ecommerce.dto.OrderItemDto();
+                    itemDto.setProductId(orderItem.getProduct().getId());
+                    itemDto.setProductName(orderItem.getProduct().getName());
+                    itemDto.setQuantity(orderItem.getQuantity());
+                    itemDto.setPriceAtPurchase(orderItem.getPriceAtPurchase());
+                    return itemDto;
+                }).collect(Collectors.toList())
+        );
+        return dto;
+    }
+}
+
+File name:
+AuthController.java
+File path:
+./src/main/java/com/yourapp/ecommerce/controller/AuthController.java
+
+package com.yourapp.ecommerce.controller;
+
+import com.yourapp.ecommerce.dto.AuthResponse;
+import com.yourapp.ecommerce.dto.LoginRequest;
+import com.yourapp.ecommerce.dto.SignupRequest;
+import com.yourapp.ecommerce.entity.User;
+import com.yourapp.ecommerce.repository.UserRepository;
+import com.yourapp.ecommerce.security.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Operation(summary = "Register a new user")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User registered successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input or user already exists")
+    })
+    @PostMapping("/signup")
+    public ResponseEntity<?> registerUser(@Valid @org.springframework.web.bind.annotation.RequestBody SignupRequest signUpRequest) {
+        if (userRepository.findByUsername(signUpRequest.getUsername()).isPresent()) {
+            return ResponseEntity.badRequest().body("Username is already taken!");
+        }
+
+        if (userRepository.findAll().stream().anyMatch(u -> u.getEmail().equals(signUpRequest.getEmail()))) {
+            return ResponseEntity.badRequest().body("Email is already in use!");
+        }
+
+        User user = new User();
+        user.setUsername(signUpRequest.getUsername());
+        user.setEmail(signUpRequest.getEmail());
+        user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
+        user.setRoles("ROLE_USER");
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok("User registered successfully!");
+    }
+
+    @Operation(summary = "Authenticate user and get JWT token")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Authentication successful"),
+        @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    })
+    @PostMapping("/login")
+    public ResponseEntity<?> authenticateUser(@Valid @org.springframework.web.bind.annotation.RequestBody LoginRequest loginRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(),
+                        loginRequest.getPassword()
+                )
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = jwtUtil.generateToken((org.springframework.security.core.userdetails.UserDetails) authentication.getPrincipal());
+
+        return ResponseEntity.ok(new AuthResponse(jwt));
+    }
+}
+
+File name:
+AdminUserController.java
+File path:
+./src/main/java/com/yourapp/ecommerce/controller/AdminUserController.java
+
+package com.yourapp.ecommerce.controller;
+
+import com.yourapp.ecommerce.dto.UpdateUserRoleRequest;
+import com.yourapp.ecommerce.entity.User;
+import com.yourapp.ecommerce.repository.UserRepository;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/admin/users")
+@Validated
+@PreAuthorize("hasRole('ADMIN')")
+public class AdminUserController {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @GetMapping
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    @GetMapping("/{userId}")
+    public User getUserById(@PathVariable Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @PutMapping("/{userId}/role")
+    public void updateUserRole(@PathVariable Long userId,
+                               @Valid @RequestBody UpdateUserRoleRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setRoles(request.getRoles());
+        userRepository.save(user);
+    }
+}
+
+File name:
+OrderController.java
+File path:
+./src/main/java/com/yourapp/ecommerce/controller/OrderController.java
+
+package com.yourapp.ecommerce.controller;
+
+import com.yourapp.ecommerce.dto.ShippingDetailsDto;
+import com.yourapp.ecommerce.entity.Order;
+import com.yourapp.ecommerce.entity.User;
+import com.yourapp.ecommerce.service.OrderService;
+import com.yourapp.ecommerce.service.PaymentService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
+
+    @Autowired
+    private OrderService orderService;
+
+    @Autowired
+    private PaymentService paymentService;
+
+    @PostMapping("/checkout")
+    public ResponseEntity<?> checkout(@AuthenticationPrincipal User user,
+                                      @Valid @RequestBody ShippingDetailsDto shippingDetails) {
+        Order order = orderService.createOrderFromCart(user, shippingDetails);
+        String clientSecret = paymentService.createPaymentIntent(order);
+
+        return ResponseEntity.ok().body(
+                java.util.Map.of(
+                        "orderId", order.getId(),
+                        "clientSecret", clientSecret
+                )
+        );
+    }
+
+    @GetMapping("/")
+    public ResponseEntity<List<Order>> getUserOrders(@AuthenticationPrincipal User user) {
+        List<Order> orders = orderService.getOrdersByUser(user);
+        return ResponseEntity.ok(orders);
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<Order> getOrder(@PathVariable Long orderId,
+                                          @AuthenticationPrincipal User user) {
+        Order order = orderService.getOrderById(orderId, user);
+        return ResponseEntity.ok(order);
+    }
+}
+
+File name:
+AdminProductController.java
+File path:
+./src/main/java/com/yourapp/ecommerce/controller/AdminProductController.java
+
+package com.yourapp.ecommerce.controller;
+
+import com.yourapp.ecommerce.dto.CreateProductRequest;
+import com.yourapp.ecommerce.dto.ProductDto;
+import com.yourapp.ecommerce.dto.UpdateProductRequest;
+import com.yourapp.ecommerce.service.ProductService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/admin/products")
+@RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
+public class AdminProductController {
+
+    private final ProductService productService;
+
+    @PostMapping
+    public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody CreateProductRequest request) {
+        return ResponseEntity.ok(productService.createProduct(request));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDto> getProductById(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.getProductById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductDto> updateProduct(@PathVariable Long id,
+                                                    @Valid @RequestBody UpdateProductRequest request) {
+        return ResponseEntity.ok(productService.updateProduct(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<ProductDto>> getAllProducts(
+            Pageable pageable,
+            @RequestParam Optional<String> category,
+            @RequestParam Optional<String> search) {
+        return ResponseEntity.ok(productService.getAllProducts(pageable, category, search));
+    }
+}
+
+File name:
+UpdateProductRequest.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/UpdateProductRequest.java
+
+package com.yourapp.ecommerce.dto;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+import java.math.BigDecimal;
+
+@Data
+public class UpdateProductRequest {
+
+    @NotNull
+    @Size(min = 2, max = 100)
+    private String name;
+
+    @Size(max = 1000)
+    private String description;
+
+    @NotNull
+    @Min(0)
+    private BigDecimal price;
+
+    @NotNull
+    @Min(0)
+    private Integer stockQuantity;
+
+    @NotNull
+    private Long categoryId;
+}
+
+File name:
+ProductDto.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/ProductDto.java
+
+package com.yourapp.ecommerce.dto;
+
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Data
+public class ProductDto {
+    private Long id;
+    private String name;
+    private String description;
+    private BigDecimal price;
+    private int stockQuantity;
+    private Long categoryId;
+    private String categoryName;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}
+
+File name:
+OrderDto.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/OrderDto.java
+
+package com.yourapp.ecommerce.dto;
+
+import com.yourapp.ecommerce.entity.OrderStatus;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Data
+public class OrderDto {
+    private Long id;
+    private LocalDateTime orderDate;
+    private OrderStatus status;
+    private BigDecimal totalAmount;
+    private String shippingAddress;
+    private String paymentIntentId;
+    private List<OrderItemDto> items;
+}
+
+File name:
+UpdateUserRoleRequest.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/UpdateUserRoleRequest.java
+
+package com.yourapp.ecommerce.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+@Data
+public class UpdateUserRoleRequest {
+    @NotBlank
+    private String roles; // comma-separated roles
+}
+
+File name:
+UpdateItemRequest.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/UpdateItemRequest.java
+
+package com.yourapp.ecommerce.dto;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+
+public class UpdateItemRequest {
+
+    @NotNull
+    @Min(1)
+    private Integer quantity;
+
+    // Getters and setters
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+}
+
+File name:
+CreateProductRequest.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/CreateProductRequest.java
+
+package com.yourapp.ecommerce.dto;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+import java.math.BigDecimal;
+
+@Data
+public class CreateProductRequest {
+
+    @NotNull
+    @Size(min = 2, max = 100)
+    private String name;
+
+    @Size(max = 1000)
+    private String description;
+
+    @NotNull
+    @Min(0)
+    private BigDecimal price;
+
+    @NotNull
+    @Min(0)
+    private Integer stockQuantity;
+
+    @NotNull
+    private Long categoryId;
+}
+
+File name:
+AddItemRequest.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/AddItemRequest.java
+
+package com.yourapp.ecommerce.dto;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+
+public class AddItemRequest {
+
+    @NotNull
+    private Long productId;
+
+    @NotNull
+    @Min(1)
+    private Integer quantity;
+
+    // Getters and setters
+
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+}
+
+File name:
+SignupRequest.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/SignupRequest.java
+
+package com.yourapp.ecommerce.dto;
+
+import lombok.Data;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+@Data
+public class SignupRequest {
+
+    @Schema(description = "Unique username", example = "john_doe")
+    @NotBlank
+    @Size(min = 3, max = 50)
+    private String username;
+
+    @Schema(description = "User email address", example = "john@example.com")
+    @NotBlank
+    @Email
+    private String email;
+
+    @Schema(description = "User password", example = "P@ssw0rd123")
+    @NotBlank
+    @Size(min = 6, max = 100)
+    private String password;
+}
+
+File name:
+CartDto.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/CartDto.java
+
+package com.yourapp.ecommerce.dto;
+
+import java.util.List;
+
+public class CartDto {
+    private List<CartItemDto> items;
+    private double totalPrice;
+
+    // Constructors
+    public CartDto() {}
+
+    public CartDto(List<CartItemDto> items, double totalPrice) {
+        this.items = items;
+        this.totalPrice = totalPrice;
+    }
+
+    // Getters and setters
+
+    public List<CartItemDto> getItems() {
+        return items;
+    }
+
+    public void setItems(List<CartItemDto> items) {
+        this.items = items;
+    }
+
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(double totalPrice) {
+        this.totalPrice = totalPrice;
+    }
+}
+
+File name:
+UpdateOrderStatusRequest.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/UpdateOrderStatusRequest.java
+
+package com.yourapp.ecommerce.dto;
+
+import com.yourapp.ecommerce.entity.OrderStatus;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+
+@Data
+public class UpdateOrderStatusRequest {
+    @NotNull
+    private OrderStatus status;
+}
+
+File name:
+OrderItemDto.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/OrderItemDto.java
+
+package com.yourapp.ecommerce.dto;
+
+import lombok.Data;
+
+import java.math.BigDecimal;
+
+@Data
+public class OrderItemDto {
+    private Long id;
+    private Long productId;
+    private String productName;
+    private int quantity;
+    private BigDecimal priceAtPurchase;
+}
+
+File name:
+LoginRequest.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/LoginRequest.java
+
+package com.yourapp.ecommerce.dto;
+
+import lombok.Data;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+@Data
+public class LoginRequest {
+
+    @NotBlank
+    private String username;
+
+    @NotBlank
+    @Size(min = 6, max = 100)
+    private String password;
+}
+
+File name:
+AuthResponse.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/AuthResponse.java
+
+package com.yourapp.ecommerce.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class AuthResponse {
+    private String token;
+}
+
+File name:
+CartItemDto.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/CartItemDto.java
+
+package com.yourapp.ecommerce.dto;
+
+public class CartItemDto {
+    private Long productId;
+    private String productName;
+    private double productPrice;
+    private int quantity;
+
+    // Constructors
+    public CartItemDto() {}
+
+    public CartItemDto(Long productId, String productName, double productPrice, int quantity) {
+        this.productId = productId;
+        this.productName = productName;
+        this.productPrice = productPrice;
+        this.quantity = quantity;
+    }
+
+    // Getters and setters
+
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public double getProductPrice() {
+        return productPrice;
+    }
+
+    public void setProductPrice(double productPrice) {
+        this.productPrice = productPrice;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+}
+
+File name:
+ShippingDetailsDto.java
+File path:
+./src/main/java/com/yourapp/ecommerce/dto/ShippingDetailsDto.java
+
+package com.yourapp.ecommerce.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+@Data
+public class ShippingDetailsDto {
+
+    @NotBlank
+    private String address;
+}
+
+
+File name:
+CartItemRepository.java
+File path:
+./src/main/java/com/yourapp/ecommerce/repository/CartItemRepository.java
+
+package com.yourapp.ecommerce.repository;
+
+import com.yourapp.ecommerce.entity.Cart;
+import com.yourapp.ecommerce.entity.CartItem;
+import com.yourapp.ecommerce.entity.Product;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface CartItemRepository extends JpaRepository<CartItem, Long> {
+    Optional<CartItem> findByCartAndProduct(Cart cart, Product product);
+}
+
+File name:
+UserRepository.java
+File path:
+./src/main/java/com/yourapp/ecommerce/repository/UserRepository.java
+
+package com.yourapp.ecommerce.repository;
+
+import com.yourapp.ecommerce.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByUsername(String username);
+}
+
+File name:
+ProductRepository.java
+File path:
+./src/main/java/com/yourapp/ecommerce/repository/ProductRepository.java
+
+package com.yourapp.ecommerce.repository;
+
+import com.yourapp.ecommerce.entity.Product;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
+}
+
+File name:
+OrderRepository.java
+File path:
+./src/main/java/com/yourapp/ecommerce/repository/OrderRepository.java
+
+package com.yourapp.ecommerce.repository;
+
+import com.yourapp.ecommerce.entity.Order;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+import java.util.Optional;
+
+public interface OrderRepository extends JpaRepository<Order, Long> {
+    Optional<Order> findByPaymentIntentId(String paymentIntentId);
+
+    // Admin: find orders by status
+    List<Order> findByStatus(com.yourapp.ecommerce.entity.OrderStatus status);
+}
+
+
+File name:
+CartRepository.java
+File path:
+./src/main/java/com/yourapp/ecommerce/repository/CartRepository.java
+
+package com.yourapp.ecommerce.repository;
+
+import com.yourapp.ecommerce.entity.Cart;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface CartRepository extends JpaRepository<Cart, Long> {
+    Optional<Cart> findByUserId(Long userId);
+
+    Optional<Cart> findByUser(com.yourapp.ecommerce.entity.User user);
+}
+
+File name:
+OrderItemRepository.java
+File path:
+./src/main/java/com/yourapp/ecommerce/repository/OrderItemRepository.java
+
+package com.yourapp.ecommerce.repository;
+
+import com.yourapp.ecommerce.entity.OrderItem;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
+}
+
+File name:
+CategoryRepository.java
+File path:
+./src/main/java/com/yourapp/ecommerce/repository/CategoryRepository.java
+
+package com.yourapp.ecommerce.repository;
+
+import com.yourapp.ecommerce.entity.Category;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface CategoryRepository extends JpaRepository<Category, Long> {
+    Optional<Category> findByName(String name);
+}
+
+File name:
+JwtUtil.java
+File path:
+./src/main/java/com/yourapp/ecommerce/security/JwtUtil.java
+
+package com.yourapp.ecommerce.security;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import java.security.Key;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
+@Component
+public class JwtUtil {
+
+    @Value("${jwt.secret}")
+    private String secret;
+
+    @Value("${jwt.expiration}")
+    private long jwtExpirationInMs;
+
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes());
+    }
+
+    public String generateToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, userDetails.getUsername());
+    }
+
+    private String createToken(Map<String, Object> claims, String subject) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(subject)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    private boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    public boolean validateToken(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+}
+
+File name:
+CustomUserDetailsService.java
+File path:
+./src/main/java/com/yourapp/ecommerce/security/CustomUserDetailsService.java
+
+package com.yourapp.ecommerce.security;
+
+import com.yourapp.ecommerce.entity.User;
+import com.yourapp.ecommerce.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        User user = userOptional.orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+
+        Collection<GrantedAuthority> authorities = Arrays.stream(user.getRoles().split(","))
+                .map(String::trim)
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPassword(),
+                authorities
+        );
+    }
+}
+
+File name:
+JwtRequestFilter.java
+File path:
+./src/main/java/com/yourapp/ecommerce/security/JwtRequestFilter.java
+
+package com.yourapp.ecommerce.security;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+@Component
+public class JwtRequestFilter extends OncePerRequestFilter {
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private CustomUserDetailsService userDetailsService;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+
+        final String authHeader = request.getHeader("Authorization");
+        String username = null;
+        String jwt = null;
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            jwt = authHeader.substring(7);
+            try {
+                username = jwtUtil.extractUsername(jwt);
+            } catch (Exception e) {
+                // Invalid token
+            }
+        }
+
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            if (jwtUtil.validateToken(jwt, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+
+        filterChain.doFilter(request, response);
+    }
+}
+
+File name:
+EcommerceAppApplication.java
+File path:
+./src/main/java/com/yourapp/ecommerce/EcommerceAppApplication.java
+
+package com.yourapp.ecommerce;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class EcommerceAppApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(EcommerceAppApplication.class, args);
+	}
+
+}
+
+
+File name:
+application.properties
+File path:
+./target/classes/application.properties
+
+spring.application.name=ecommerceApp
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/ecommerce_db
+spring.datasource.username=admin
+spring.datasource.password=admin
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+jwt.secret=your_jwt_secret_key
+jwt.expiration=3600000
+stripe.secret.key=your_stripe_secret_key
+stripe.public.key=your_stripe_public_key
+
