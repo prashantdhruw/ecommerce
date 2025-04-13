@@ -8,7 +8,7 @@
 		<version>3.3.0</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.yourapp.ecommerce</groupId>
+	<groupId>com.ecommerce</groupId>
 	<artifactId>ecommerceApi</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>ecommerceApp</name>
