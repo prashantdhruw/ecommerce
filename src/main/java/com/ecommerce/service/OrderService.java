@@ -108,9 +108,14 @@ public class OrderService {
     }
 
     public java.util.List<Order> getOrdersByUser(User user) {
-        return orderRepository.findAll().stream()
+        List<Order> orders = orderRepository.findAll().stream()
                 .filter(order -> order.getUser().getId().equals(user.getId()))
                 .toList();
+        // Ensure never returns null, always a list (empty if no orders)
+        if (orders == null) {
+            return java.util.Collections.emptyList();
+        }
+        return orders;
     }
 
     // Admin: get all orders

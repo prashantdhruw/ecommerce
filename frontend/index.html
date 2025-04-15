@@ -1,0 +1,50 @@
+<![CDATA[
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ecommerce Frontend</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="main-container">
+        <h1>Ecommerce Demo</h1>
+        <div id="auth-section">
+            <div id="login-form" class="auth-form">
+                <h2>Login</h2>
+                <input type="text" id="login-username" placeholder="Username" autocomplete="username">
+                <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+                <button id="login-btn">Login</button>
+                <div class="form-message" id="login-message"></div>
+                <p>Don't have an account? <a href="#" id="show-signup">Sign up</a></p>
+            </div>
+            <div id="signup-form" class="auth-form" style="display:none;">
+                <h2>Sign Up</h2>
+                <input type="text" id="signup-username" placeholder="Username" autocomplete="username">
+                <input type="password" id="signup-password" placeholder="Password" autocomplete="new-password">
+                <button id="signup-btn">Sign Up</button>
+                <div class="form-message" id="signup-message"></div>
+                <p>Already have an account? <a href="#" id="show-login">Login</a></p>
+            </div>
+        </div>
+        <div id="user-section" style="display:none;">
+            <div id="user-info">
+                <span id="welcome-user"></span>
+                <button id="logout-btn">Logout</button>
+            </div>
+            <div id="main-tabs">
+                <button class="tab-btn" data-tab="products">Products</button>
+                <button class="tab-btn" data-tab="cart">Cart</button>
+                <button class="tab-btn" data-tab="orders">Orders</button>
+            </div>
+            <div id="tab-content">
+                <div id="products-tab" class="tab-panel"></div>
+                <div id="cart-tab" class="tab-panel" style="display:none;"></div>
+                <div id="orders-tab" class="tab-panel" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+]]>

@@ -30,28 +30,36 @@ public class CartService {
     private ProductRepository productRepository;
 
     public CartDto getCart(User user) {
-        Cart cart = getOrCreateCart(user);
-        List<CartItem> cartItems = cartItemRepository.findAll().stream()
-                .filter(item -> item.getCart().getId().equals(cart.getId()))
-                .toList();
-
+        // Try to find the cart for the user, but do not create if not exists
+        Optional<Cart> cartOpt = cartRepository.findByUserId(user.getId());
         List<CartItemDto> itemDtos = new ArrayList<>();
         double total = 0.0;
 
-        for (CartItem item : cartItems) {
-            Product product = item.getProduct();
-            double price = product.getPrice().doubleValue();
-            int quantity = item.getQuantity();
-            total += price * quantity;
+        if (cartOpt.isPresent()) {
+            Cart cart = cartOpt.get();
+            List<CartItem> cartItems = cartItemRepository.findAll().stream()
+                    .filter(item -> item.getCart().getId().equals(cart.getId()))
+                    .toList();
 
-            itemDtos.add(new CartItemDto(
-                    product.getId(),
-                    product.getName(),
-                    price,
-                    quantity
-            ));
+            for (CartItem item : cartItems) {
+                Product product = item.getProduct();
+                if (product == null) {
+                    log.warn("Cart item {} has no associated product, skipping", item.getId());
+                    continue;
+                }
+                double price = product.getPrice().doubleValue();
+                int quantity = item.getQuantity();
+                total += price * quantity;
+            
+                itemDtos.add(new CartItemDto(
+                        product.getId(),
+                        product.getName(),
+                        price,
+                        quantity
+                ));
+            }
         }
-
+        // If cart does not exist, return empty cart (itemDtos is empty, total is 0.0)
         return new CartDto(itemDtos, total);
     }
 

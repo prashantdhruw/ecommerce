@@ -26,15 +26,18 @@ public class CartController {
     private UserRepository userRepository;
 
     private User getCurrentUser(Authentication authentication) {
-        String username = authentication.getName();
-        return userRepository.findByUsername(username)
+        String email = authentication.getName();
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     @GetMapping
-    public ResponseEntity<CartDto> getCart(Authentication authentication) {
+    public ResponseEntity<?> getCart(Authentication authentication) {
         User user = getCurrentUser(authentication);
         CartDto cartDto = cartService.getCart(user);
+        if (cartDto == null || cartDto.getItems() == null || cartDto.getItems().isEmpty()) {
+            return ResponseEntity.ok(java.util.Collections.singletonMap("message", "No products present in cart"));
+        }
         return ResponseEntity.ok(cartDto);
     }
 

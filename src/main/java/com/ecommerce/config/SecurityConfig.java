@@ -49,7 +49,22 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/users/**").hasRole("ADMIN")
                 .requestMatchers("/api/admin/categories/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
-            );
+            )
+            // CORS configuration for development: allow all origins, methods, and headers for /api/**
+            // WARNING: In production, restrict allowed origins, methods, and headers as appropriate!
+            .cors(cors -> cors.configurationSource(request -> {
+                org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
+                config.setAllowedOrigins(java.util.List.of("*"));
+                config.setAllowedMethods(java.util.List.of("*"));
+                config.setAllowedHeaders(java.util.List.of("*"));
+                config.setAllowCredentials(false);
+                config.setMaxAge(3600L);
+                // Only apply to /api/** endpoints
+                if (request.getRequestURI().startsWith("/api/")) {
+                    return config;
+                }
+                return null;
+            }));
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
