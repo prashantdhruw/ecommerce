@@ -42,6 +42,9 @@ public class Product {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @Version
+    private Long version;
+
     public int getStock() {
         return this.stockQuantity;
     }

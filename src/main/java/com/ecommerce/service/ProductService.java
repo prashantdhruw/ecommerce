@@ -64,9 +64,15 @@ public class ProductService {
         product.setStockQuantity(request.getStockQuantity());
         product.setCategory(category);
 
-        Product updated = productRepository.save(product);
-        log.info("Product updated with ID: {}", updated.getId());
-        return toDto(updated);
+        Product updated;
+        try {
+            updated = productRepository.save(product);
+            log.info("Product updated with ID: {}", updated.getId());
+            return toDto(updated);
+        } catch (org.springframework.orm.ObjectOptimisticLockingFailureException ex) {
+            log.error("Optimistic locking failure while updating product with ID: {}", id, ex);
+            throw new org.springframework.dao.OptimisticLockingFailureException("Failed to update product due to concurrent modification", ex);
+        }
     }
 
     public void deleteProduct(Long id) {

@@ -14,7 +14,7 @@ public class AdminCategoryController {
 
     private final CategoryService categoryService;
 
-    @Autowired
+    @Autowired // Inject CategoryServiceImpl
     public AdminCategoryController(CategoryService categoryService) {
         this.categoryService = categoryService;
     }
@@ -24,5 +24,19 @@ public class AdminCategoryController {
     public ResponseEntity<CategoryDto> createCategory(@RequestBody CreateCategoryRequest request) {
         CategoryDto created = categoryService.createCategory(request);
         return ResponseEntity.ok(created);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CategoryDto> updateCategory(@PathVariable Long id, @RequestBody com.ecommerce.dto.UpdateCategoryRequest request) {
+        CategoryDto updated = categoryService.updateCategory(id, request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+        categoryService.deleteCategory(id);
+        return ResponseEntity.noContent().build();
     }
 }

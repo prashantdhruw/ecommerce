@@ -33,5 +33,6 @@ build/
 .vscode/
 .roo/
 .roomodes*
+collect_files.sh*
+collected_files_content.txt
 memory-bank/
-nohup.out
