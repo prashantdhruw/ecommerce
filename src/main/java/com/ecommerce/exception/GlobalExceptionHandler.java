@@ -22,6 +22,12 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
+    @ExceptionHandler(ConcurrentModificationException.class)
+    public ResponseEntity<Map<String, Object>> handleConcurrentModification(ConcurrentModificationException ex) {
+        logger.warn("Concurrent modification error: {}", ex.getMessage());
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<Map<String, Object>> handleValidationException(ValidationException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
@@ -39,9 +45,8 @@ public class GlobalExceptionHandler {
         body.put("status", HttpStatus.BAD_REQUEST.value());
 
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error -> 
-            errors.put(error.getField(), error.getDefaultMessage())
-        );
+        ex.getBindingResult().getFieldErrors()
+                .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
         body.put("errors", errors);
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
